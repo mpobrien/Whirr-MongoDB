@@ -31,7 +31,7 @@ function configure_mongodb() {
 
   # get parameters
 
-  while getopts "p:c" OPTION; do
+  while getopts "p:c:" OPTION; do
     case $OPTION in 
       p)
         PORT="$OPTARG"

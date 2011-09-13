@@ -60,7 +60,7 @@ function install_mongodb() {
   local OPTARG
 
   CLOUD_PROVIDER=
-  while getopts "c:u:" OPTION; do
+  while getopts "c:" OPTION; do
     case $OPTION in 
     c) 
       CLOUD_PROVIDER="$OPTARG"
