@@ -49,6 +49,7 @@
     <module>services/voldemort</module>
     <module>services/elasticsearch</module>
     <module>services/hama</module>
+    <module>services/mongodb</module>
   </modules>
 
   <properties>
