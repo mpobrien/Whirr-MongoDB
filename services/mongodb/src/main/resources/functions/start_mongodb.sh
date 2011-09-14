@@ -15,5 +15,10 @@
 # limitations under the License.
 #
 function start_mongodb() {
-    /etc/init.d/mongod start
+  sudo /etc/init.d/mongod start
+  echo -n 'Waiting for MongoDB to start (If this is the first startup, files must allocate.'
+  while [ `sudo grep "waiting for connections" /var/log/mongo/mongod.log  | wc -l` == 0 ]; do
+    echo -n '.'
+    sleep 5
+  done
 }

@@ -83,8 +83,6 @@
       <groupId>com.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
       <version>${mongo-java-driver.version}</version>
-      <classifier>tests</classifier>
-      <scope>test</scope>
     </dependency>
   </dependencies>
 </project>

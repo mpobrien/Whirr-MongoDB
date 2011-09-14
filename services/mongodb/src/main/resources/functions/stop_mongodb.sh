@@ -15,5 +15,5 @@
 # limitations under the License.
 #
 function stop_mongodb() {
-    /etc/init.d/mongod stop
+  sudo /etc/init.d/mongod stop
 }

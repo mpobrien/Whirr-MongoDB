@@ -398,6 +398,10 @@
       <id>cloudera</id>
       <url>https://repository.cloudera.com/content/repositories/releases/</url>
     </repository>
+    <repository>
+      <id>sonatype.snapshots</id>
+      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    </repository>
   </repositories>
   <pluginRepositories>
     <pluginRepository>

@@ -18,24 +18,26 @@ function register_mongodb_repo() {
   if which dpkg &> /dev/null; then 
     # TODO - Give an option for disabling upstart in favor of sysvinit
     # (10gen offers repos for both styles)
-    cat > /etc/apt/sources.list.d/10gen-mongodb.list <<EOF
+    cat > 10gen-mongodb.list <<EOF
 deb http://downloads-distro.mongodb.org/repo/ubuntu-upstart dist 10gen
 EOF
+    sudo mv 10gen-mongodb.list /etc/apt/sources.list.d/
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
     sudo apt-get update 
   elif which rpm &> /dev/null; then
     # x86_64 or i686
     ARCH=`uname -m`
     # Cleanup
-    rm -rf /etc/yum.repos.d/10gen-mongodb.repo
-    rm -rf /etc/yum.repos.d/10gen-mongodb_$ARCH.repo
-    cat > /etc/yum.repos.d/10gen-mongodb_$ARCH.repo <<EOF
+    sudo rm -rf /etc/yum.repos.d/10gen-mongodb.repo
+    sudo rm -rf /etc/yum.repos.d/10gen-mongodb_$ARCH.repo
+    cat > 10gen-mongodb_$ARCH.repo <<EOF
 [10gen-mongodb_$ARCH]
 name=10gen MongoDB Repository for $ARCH
 baseurl=http://downloads-distro.mongodb.org/repo/redhat/os/$ARCH
 gpgcheck=0
 EOF
-    yum update -y yum
+    sudo mv 10gen-mongodb_$ARCH.repo /etc/yum.repos.d/
+    sudo yum update -y yum
   fi
 }
 
@@ -43,16 +45,16 @@ function update_repo() {
   if which dpkg &> /dev/null; then
     sudo apt-get update
   elif which rpm &> /dev/null; then
-    yum update -y yum
+    sudo yum update -y yum
   fi
 }
 
 function install_mongodb_package() {
   if which dpkg &> /dev/null; then
-    apt-get update
-    apt-get -y install mongo-10gen-unstable-server
+    sudo apt-get update
+    sudo apt-get -y install mongodb-10gen
   elif which rpm &> /dev/null; then
-    yum install -y mongo-10gen-unstable-server
+    sudo yum install -y mongo-10gen-server
   fi
 }
 function install_mongodb() {
@@ -71,42 +73,49 @@ function install_mongodb() {
   case $CLOUD_PROVIDER in 
     ec2 | aws-ec2 )
       # Alias /mnt as /data
-      if [ ! -e /data ]; then ln -s /mnt /data; fi
+      if [ ! -e /data ]; then sudo ln -s /mnt /data; fi
       ;;
     *)
       ;;
   esac
 
+  MONGO_USER=
   MONGO_HOME=/var
   MONGO_CONF_DIR=/etc
   MONGO_LOG_DIR=/var/log/mongo
   MONGO_DATA_DIR=/var/lib/mongo
 
+  if which dpkg &> /dev/null; then
+    MONGO_USER=mongodb
+  elif which rpm &> /dev/null; then
+    MONGO_USER=mongod
+  fi
+
   register_mongodb_repo
   install_mongodb_package
 
   # Logging
-  rm -rf $MONGO_LOG_DIR
-  mkdir -p /data/mongodb/logs
-  ln -s /data/mongodb/logs $MONGO_LOG_DIR
+  sudo rm -rf $MONGO_LOG_DIR
+  sudo mkdir -p /data/mongodb/logs
+  sudo ln -s /data/mongodb/logs $MONGO_LOG_DIR
   
   # Data
-  rm -rf $MONGO_DATA_DIR
-  mkdir -p /data/mongodb/data
-  ln -s /data/mongodb/data $MONGO_DATA_DIR
+  sudo rm -rf $MONGO_DATA_DIR
+  sudo mkdir -p /data/mongodb/data
+  sudo ln -s /data/mongodb/data $MONGO_DATA_DIR
   
-  chown -R mongod:mongod /data/mongodb
+  sudo chown -R $MONGO_USER:$MONGO_USER /data/mongodb
 
   # Change the default TCP Keepalive to 300 seconds per 10gen Recommendation
   # See: http://www.mongodb.org/display/DOCS/Troubleshooting#Troubleshooting-Socketerrorsinshardedclustersandreplicasets
   sudo sh -c 'echo 300 > /proc/sys/net/ipv4/tcp_keepalive_time'
 
    # up ulimits
-  echo "root soft nofile 65535" >> /etc/security/limits.conf
-  echo "root hard nofile 65535" >> /etc/security/limits.conf
-  ulimit -n 65535
+  sudo sh -c 'echo "root soft nofile 65535" >> /etc/security/limits.conf'
+  sudo sh -c 'echo "root hard nofile 65535" >> /etc/security/limits.conf'
+  sudo sh -c 'ulimit -n 65535'
 
   # if there is no hosts file then provide a minimal one
-  [ ! -f /etc/hosts ] && echo "127.0.0.1 localhost" > /etc/hosts
+  [ ! -f /etc/hosts ] && sudo sh -c 'echo "127.0.0.1 localhost" > /etc/hosts'
 
 }
