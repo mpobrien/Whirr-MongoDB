@@ -30,8 +30,14 @@
   <name>Apache Whirr MongoDB</name>
   <properties>
     <mongodb.version>2.0.0-rc2</mongodb.version>
-    <mongo-java-driver.version>2.7.0-SNAPSHOT</mongo-java-driver.version>
+    <mongo-java-driver.version>2.7.3</mongo-java-driver.version>
   </properties>
+  <repositories>
+    <repository>
+      <id>sonatype.releases</id>
+      <url>https://oss.sonatype.org/content/repositories/releases</url>
+    </repository>
+  </repositories>
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -80,7 +86,7 @@
       <artifactId>dnsjava</artifactId>
     </dependency>
     <dependency>
-      <groupId>com.mongodb</groupId>
+      <groupId>org.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
       <version>${mongo-java-driver.version}</version>
     </dependency>
