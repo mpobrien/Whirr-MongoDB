@@ -27,6 +27,7 @@ public final class MongoDBConstants {
 
   public static final String PARAM_PROVIDER = "-c";
   public static final String PARAM_PORT = "-p";
+  public static final String PARAM_TARBALL = "-t";
 
   public static final String FILE_MONGODB_DEFAULT_PROPERTIES = "whirr-mongodb-default.properties";
 

@@ -22,7 +22,7 @@ public class MongoDBStandaloneClusterActionHandler extends BaseMongoDBClusterAct
 
   public static final String ROLE = "mongodb-standalone";
   public static final int PORT = 27017;
-  private static final String CFG_KEY_PORT = "mongod.standalone.port";
+  private static final String CFG_KEY_PORT = "whirr.mongod.standalone.port";
 
   public MongoDBStandaloneClusterActionHandler() {
     super(ROLE, PORT, CFG_KEY_PORT);

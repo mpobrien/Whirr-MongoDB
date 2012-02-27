@@ -56,9 +56,18 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
   protected void beforeBootstrap(ClusterActionEvent event) 
             throws IOException {
     ClusterSpec clusterSpec = event.getClusterSpec();
+    Configuration config = getConfiguration(clusterSpec);
 
     addStatement(event, call("configure_hostnames",
       MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider()));
+  }
+
+  @Override
+  protected void afterBootstrap(ClusterActionEvent event)
+            throws IOException, InterruptedException { 
+    ClusterSpec clusterSpec = event.getClusterSpec();
+    Cluster cluster = event.getCluster();
+    Configuration config = getConfiguration(clusterSpec);
   }
 
   @Override
@@ -66,11 +75,13 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
             throws IOException, InterruptedException {
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
+    Configuration config = getConfiguration(clusterSpec);
 
     int port = defaultPort;
 
+	
     if (configKeyPort != null) {
-      port = getConfiguration(clusterSpec).getInt(configKeyPort, defaultPort);
+      port = config.getInt(configKeyPort, defaultPort);
     }
 
     Cluster.Instance instance = cluster.getInstanceMatching(role(role));
@@ -82,13 +93,27 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
       Rule.create().destination(instance).port(port)
     );
 
+    addStatement(event, call("install_service"));
+    addStatement(event, call("install_tarball"));
 
-    addStatement(event, call(
-        getInstallFunction(getConfiguration(clusterSpec)),
+	String tarUrl = config.getString("whirr.mongodb.tarball.url");
+	if(tarUrl != null && tarUrl.length() > 0 ){
+		addStatement(event, call(
+			getInstallFunction(config),
+			MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider(),
+			MongoDBConstants.PARAM_TARBALL, prepareRemoteFileUrl(event, tarUrl) )
+		);
+	}else{
+		addStatement(event, call(
+			getInstallFunction(config),
+			MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider()));
+	}
+
+    /*addStatement(event, call(
+        getInstallFunction(config),
         MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider())
-    );
+    );*/
 
-    Configuration config = getConfiguration(clusterSpec);
     String configFunction = getConfigureFunction(config);
 
     // TODO - Config of RS, etc for base classes
@@ -98,6 +123,10 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
       MongoDBConstants.PARAM_PORT, String.valueOf(port))
     );
 
+    LOG.info("Called config function....");
+
+
+    LOG.info("Calling start function "+ getStartFunction(config));
     // TODO - Do we need to start mongo inside the config for RS etc?
     addStatement(event, call(getStartFunction(config)));
 

@@ -62,10 +62,14 @@ function install_mongodb() {
   local OPTARG
 
   CLOUD_PROVIDER=
-  while getopts "c:" OPTION; do
+  TARBALL_URL=
+  while getopts "c:t:" OPTION; do
     case $OPTION in 
     c) 
       CLOUD_PROVIDER="$OPTARG"
+      ;;
+    t)
+      TARBALL_URL="$OPTARG"
       ;;
     esac
   done
@@ -85,37 +89,80 @@ function install_mongodb() {
   MONGO_LOG_DIR=/var/log/mongo
   MONGO_DATA_DIR=/var/lib/mongo
 
-  if which dpkg &> /dev/null; then
-    MONGO_USER=mongodb
-  elif which rpm &> /dev/null; then
-    MONGO_USER=mongod
+  if [ -z "$TARBALL_URL" ]
+  then
+      #install the default package from repo
+      if which dpkg &> /dev/null; then
+        MONGO_USER=mongodb
+      elif which rpm &> /dev/null; then
+        MONGO_USER=mongod
+      fi
+      register_mongodb_repo
+      install_mongodb_package
+  else
+      TARFILE=`basename $TARBALL_URL`
+      #Figure out a directory name for the installation
+      #Based on the name from the tarball URL
+      #handle both .tar.gz as well as .tgz
+      mongo_base_name=${TARFILE##*/}
+      case $mongo_base_name in
+          *.tar.gz)
+                mongo_base_name=`basename "$mongo_base_name" .tar.gz`
+                ;;
+          *.tgz)
+                mongo_base_name=`basename "$mongo_base_name" .tgz`
+                ;;
+      esac
+      MONGO_BASE_DIR="/usr/local/$mongo_base_name"
+      install_tarball "$TARBALL_URL" "/usr/local/"
   fi
 
-  register_mongodb_repo
-  install_mongodb_package
-
+  echo "Creating log directories."
   # Logging
   sudo rm -rf $MONGO_LOG_DIR
   sudo mkdir -p /data/mongodb/logs
   sudo ln -s /data/mongodb/logs $MONGO_LOG_DIR
   
   # Data
+  echo "Creating data directories."
   sudo rm -rf $MONGO_DATA_DIR
   sudo mkdir -p /data/mongodb/data
   sudo ln -s /data/mongodb/data $MONGO_DATA_DIR
   
+  echo "Setting up mongodb user"
   sudo chown -R $MONGO_USER:$MONGO_USER /data/mongodb
 
   # Change the default TCP Keepalive to 300 seconds per 10gen Recommendation
   # See: http://www.mongodb.org/display/DOCS/Troubleshooting#Troubleshooting-Socketerrorsinshardedclustersandreplicasets
+  echo "Setting tcp keepalive."
   sudo sh -c 'echo 300 > /proc/sys/net/ipv4/tcp_keepalive_time'
 
    # up ulimits
+  echo "Setting ulimits."
   sudo sh -c 'echo "root soft nofile 65535" >> /etc/security/limits.conf'
   sudo sh -c 'echo "root hard nofile 65535" >> /etc/security/limits.conf'
   sudo sh -c 'ulimit -n 65535'
 
   # if there is no hosts file then provide a minimal one
+  echo "Setting hostfile."
   [ ! -f /etc/hosts ] && sudo sh -c 'echo "127.0.0.1 localhost" > /etc/hosts'
 
+  echo "Creating mongod.conf file"
+    cat > /etc/mongod.conf <<EOF
+dbpath = $MONGO_DATA_DIR
+logpath = $MONGO_LOG_DIR/mongod.log
+logappend = true
+fork = true
+port = 27017
+EOF
+
+  echo "Creating init.d script"
+echo "Creating init.d script"
+cat >/etc/init.d/mongod <<EOF
+#!/bin/bash
+MONGO_HOME=$MONGO_BASE_DIR $MONGO_BASE_DIR/bin/mongod --fork -f /etc/mongod.conf
+EOF
+
+    chmod +x /etc/init.d/mongod
+    install_service mongod
 }
