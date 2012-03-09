@@ -21,6 +21,7 @@ package org.apache.whirr.service.mongodb;
 import org.apache.commons.configuration.Configuration;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterSpec;
+import org.apache.whirr.RolePredicates;
 import org.apache.whirr.service.ClusterActionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,24 +74,26 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
   @Override
   protected void beforeConfigure(ClusterActionEvent event) 
             throws IOException, InterruptedException {
+	LOG.info("Handling beforeConfigure event");
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
     Configuration config = getConfiguration(clusterSpec);
 
     int port = defaultPort;
-
 	
     if (configKeyPort != null) {
       port = config.getInt(configKeyPort, defaultPort);
     }
 
-    Cluster.Instance instance = cluster.getInstanceMatching(role(role));
-    InetAddress publicAddress = instance.getPublicAddress();
-
     LOG.info("Opening firewall port for MongoDB on '" + port + "'");
+
     // TODO - For sharding, only open mongod ports internal to cluster?
     event.getFirewallManager().addRule(
-      Rule.create().destination(instance).port(port)
+      Rule.create()
+        .destination(cluster.getInstancesMatching(
+				//TODO this is probably sub-optimal? improve this
+				RolePredicates.anyRoleIn(MongoDBClusterActionHandler.ALL_ROLES)))
+        .ports(port)
     );
 
     addStatement(event, call("install_service"));
@@ -99,20 +102,15 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 	String tarUrl = config.getString("whirr.mongodb.tarball.url");
 	if(tarUrl != null && tarUrl.length() > 0 ){
 		addStatement(event, call(
-			getInstallFunction(config),
+			getInstallFunction(config), role,
 			MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider(),
 			MongoDBConstants.PARAM_TARBALL, prepareRemoteFileUrl(event, tarUrl) )
 		);
 	}else{
 		addStatement(event, call(
-			getInstallFunction(config),
+			getInstallFunction(config), role,
 			MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider()));
 	}
-
-    /*addStatement(event, call(
-        getInstallFunction(config),
-        MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider())
-    );*/
 
     String configFunction = getConfigureFunction(config);
 
@@ -123,10 +121,8 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
       MongoDBConstants.PARAM_PORT, String.valueOf(port))
     );
 
-    LOG.info("Called config function....");
+    LOG.info("Calling start function: "+ getStartFunction(config));
 
-
-    LOG.info("Calling start function "+ getStartFunction(config));
     // TODO - Do we need to start mongo inside the config for RS etc?
     addStatement(event, call(getStartFunction(config)));
 
@@ -138,8 +134,5 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
     Cluster cluster = event.getCluster();
 
     LOG.info("Completed configuration of {}", clusterSpec.getClusterName());
-    /*String hosts = Joiner.on(',').join(getHosts(cluster.getInstancesMatching(
-      role(ZOOKEEPER_ROLE))));
-    LOG.info("Hosts: {}", hosts);*/
   }
 }

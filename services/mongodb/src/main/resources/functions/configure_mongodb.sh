@@ -15,11 +15,14 @@
 # limitations under the License.
 #
 function configure_mongodb() {
+  echo "configuring mongodb"
   local OPTIND
   local OPTARG
   
   ROLES=$1
   shift
+
+  echo "my roles are: $ROLES"
 
   MONGO_HOME=/var
   MONGO_CONF_DIR=/etc
@@ -63,5 +66,18 @@ function configure_mongodb() {
     ;;
   esac
 
-  sudo sed -i -e "s|port.*|port = $PORT|" $MONGO_CONF_DIR/mongod.conf
+  sudo sed -i -e "s|port.*|port = $PORT|" $MONGO_CONF_DIR/mongodb.conf
+
+  for role in $(echo "$ROLES" | tr "," "\n"); do
+    case $role in
+    mongodb-standalone)
+      echo "Configuring mongodb standalone"
+      ;;
+    mongodb-replsetmember)
+      echo "Configuring mongodb replsetmember"
+      echo "replSet = whirr/localhost:$PORT" >> /etc/mongodb.conf
+      ;;
+    esac
+  done
+
 }

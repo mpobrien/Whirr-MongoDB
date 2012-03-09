@@ -21,6 +21,8 @@ package org.apache.whirr.service.mongodb;
 import org.apache.commons.configuration.Configuration;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.ClusterActionHandlerSupport;
+import com.google.common.collect.Sets;
+import java.util.Set;
 
 import java.io.IOException;
 
@@ -29,6 +31,10 @@ import java.io.IOException;
  */
 public abstract class MongoDBClusterActionHandler
        extends ClusterActionHandlerSupport {
+
+  //TODO use serviceloader here?
+  protected static final Set<String> ALL_ROLES = Sets.newHashSet(MongoDBStandaloneClusterActionHandler.ROLE, 
+		                                                         MongoDBReplSetMemberClusterActionHandler.ROLE);
 
   /**
    * Returns a composite configuration that is made up from the global

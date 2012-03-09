@@ -16,6 +16,7 @@
 #
 function register_mongodb_repo() {
   if which dpkg &> /dev/null; then 
+	echo "Registering MongoDB repo (dpkg)"
     # TODO - Give an option for disabling upstart in favor of sysvinit
     # (10gen offers repos for both styles)
     cat > 10gen-mongodb.list <<EOF
@@ -25,6 +26,7 @@ EOF
     sudo apt-key adv --keyserver keyserver.ubuntu.com --recv 7F0CEB10
     sudo apt-get update 
   elif which rpm &> /dev/null; then
+	echo "Registering MongoDB repo (rpm)"
     # x86_64 or i686
     ARCH=`uname -m`
     # Cleanup
@@ -43,23 +45,31 @@ EOF
 
 function update_repo() {
   if which dpkg &> /dev/null; then
+	echo "Updating repo (apt-get)"
     sudo apt-get update
   elif which rpm &> /dev/null; then
+	echo "Updating repo (yum)"
     sudo yum update -y yum
   fi
 }
 
 function install_mongodb_package() {
   if which dpkg &> /dev/null; then
+	echo "Installing mongodb package (apt-get)"
     sudo apt-get update
     sudo apt-get -y install mongodb-10gen
   elif which rpm &> /dev/null; then
+	echo "Installing mongodb package (rpm)"
     sudo yum install -y mongo-10gen-server
   fi
 }
 function install_mongodb() {
+  echo  "Installing MongoDB..."
   local OPTIND
   local OPTARG
+
+  ROLE=$1
+  shift
 
   CLOUD_PROVIDER=
   TARBALL_URL=
@@ -91,6 +101,7 @@ function install_mongodb() {
 
   if [ -z "$TARBALL_URL" ]
   then
+	  echo "Installing package from repository"
       #install the default package from repo
       if which dpkg &> /dev/null; then
         MONGO_USER=mongodb
@@ -100,6 +111,8 @@ function install_mongodb() {
       register_mongodb_repo
       install_mongodb_package
   else
+	  echo "Installing package from tarball url: $TARBALL_URL"
+      #install the default package from repo
       TARFILE=`basename $TARBALL_URL`
       #Figure out a directory name for the installation
       #Based on the name from the tarball URL
@@ -115,6 +128,23 @@ function install_mongodb() {
       esac
       MONGO_BASE_DIR="/usr/local/$mongo_base_name"
       install_tarball "$TARBALL_URL" "/usr/local/"
+      echo "Creating a config file"
+      cat > /etc/mongodb.conf <<EOF
+dbpath = $MONGO_DATA_DIR
+logpath = $MONGO_LOG_DIR/mongod.log
+logappend = true
+fork = true
+port = 27017
+EOF
+
+      echo "Creating init.d script"
+	  #TODO: this needs a whole lot more
+      cat >/etc/init.d/mongodb <<EOF
+      #!/bin/bash
+      MONGO_HOME=$MONGO_BASE_DIR $MONGO_BASE_DIR/bin/mongod --fork -f /etc/mongodb.conf
+EOF
+      chmod +x /etc/init.d/mongodb
+      install_service mongodb
   fi
 
   echo "Creating log directories."
@@ -146,23 +176,6 @@ function install_mongodb() {
   # if there is no hosts file then provide a minimal one
   echo "Setting hostfile."
   [ ! -f /etc/hosts ] && sudo sh -c 'echo "127.0.0.1 localhost" > /etc/hosts'
+  true
 
-  echo "Creating mongod.conf file"
-    cat > /etc/mongod.conf <<EOF
-dbpath = $MONGO_DATA_DIR
-logpath = $MONGO_LOG_DIR/mongod.log
-logappend = true
-fork = true
-port = 27017
-EOF
-
-  echo "Creating init.d script"
-echo "Creating init.d script"
-cat >/etc/init.d/mongod <<EOF
-#!/bin/bash
-MONGO_HOME=$MONGO_BASE_DIR $MONGO_BASE_DIR/bin/mongod --fork -f /etc/mongod.conf
-EOF
-
-    chmod +x /etc/init.d/mongod
-    install_service mongod
 }
