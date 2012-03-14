@@ -37,13 +37,17 @@ import org.apache.whirr.service.ClusterActionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import static org.apache.whirr.RolePredicates.role;
+import static org.apache.whirr.RolePredicates.anyRoleIn;
 import static org.apache.whirr.service.FirewallManager.Rule;
 import static org.jclouds.scriptbuilder.domain.Statements.call;
+import com.google.common.collect.Sets;
+			  
 
 public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBClusterActionHandler {
 
   public static final String ROLE = "mongodb-replsetmember";
   public static final int PORT = 27017;
+  private int arbiterPort = MongoDBArbiterClusterActionHandler.PORT;
   private static final String CFG_KEY_PORT = "mongodb.replset.port";
   private static final Logger LOG =
     LoggerFactory.getLogger(MongoDBReplSetMemberClusterActionHandler.class);
@@ -60,12 +64,22 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	LOG.info("Configuring replica set members.");
 
 	//Get all the instances that are marked as replica set members
-	Set<Cluster.Instance> replSetInstances = cluster.getInstancesMatching(role(ROLE));
+	Set<String> replSetRoles = Sets.newHashSet(ROLE, MongoDBArbiterClusterActionHandler.ROLE);
+	Set<Cluster.Instance> replSetInstances = cluster.getInstancesMatching(anyRoleIn(replSetRoles));
 	//Just grab the first of these instances, use it to send the rs.initiate()
 	Cluster.Instance setLeader = replSetInstances.iterator().next();
 
 	//TODO this is obvs temporary, use the port from config file,
 	//need to refactor how its configured/exposed
+	
+	try{
+		Configuration config = getConfiguration(clusterSpec);
+		this.arbiterPort = config.getInt(MongoDBArbiterClusterActionHandler.CFG_KEY_PORT,
+										  MongoDBArbiterClusterActionHandler.PORT);
+	}catch(IOException e){
+		this.arbiterPort = MongoDBArbiterClusterActionHandler.PORT;
+	}
+
 	
 	Mongo mongo;
 	DB db;
@@ -81,7 +95,7 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	}
 
 	try{
-		BasicDBObject configObject = generateReplicaSetConfig(replSetInstances); // throws IOexc
+		BasicDBObject configObject = this.generateReplicaSetConfig(replSetInstances); // throws IOexc
 		BasicDBObject commandInfo = new BasicDBObject("replSetInitiate", configObject);
 		LOG.info("Sending rs.initiate() command");
 		CommandResult initiateResult = db.command(commandInfo);
@@ -101,7 +115,7 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
    * @throws IOException      Thrown if the private IP of any instance is unavailable
    *
    */
-  private static BasicDBObject generateReplicaSetConfig(Set<Cluster.Instance> memberInstances)
+  private BasicDBObject generateReplicaSetConfig(Set<Cluster.Instance> memberInstances)
 	  throws IOException 
   {
 	  BasicDBObject returnVal = new BasicDBObject();
@@ -112,14 +126,17 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 
 	  ArrayList replicaSetMembers = new ArrayList();
 	  for(Cluster.Instance member : memberInstances){
-		  String host = member.getPrivateAddress().getHostAddress() + ":" + PORT; // throws an IOExc
+		  BasicDBObjectBuilder hostObj = BasicDBObjectBuilder.start().add("_id", counter);
+		  if(member.getRoles().contains(MongoDBArbiterClusterActionHandler.ROLE)){
+			  //it's an arbiter, use port from config file
+			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + this.arbiterPort);
+			  hostObj.add("arbiterOnly", true);
+		  }else{
+			  // it's a data member
+			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + this.port); // throws an IOExc
+		  }
 
-		  replicaSetMembers.add(
-            BasicDBObjectBuilder.start()
-			  .add("_id", counter)
-			  .add("host", host)
-			  .get()
-		  );
+		  replicaSetMembers.add(hostObj.get());
 		  counter++;
 	  }
 

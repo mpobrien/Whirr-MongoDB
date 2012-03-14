@@ -11,3 +11,4 @@
 #   limitations under the License.
 org.apache.whirr.service.mongodb.MongoDBStandaloneClusterActionHandler
 org.apache.whirr.service.mongodb.MongoDBReplSetMemberClusterActionHandler
+org.apache.whirr.service.mongodb.MongoDBArbiterClusterActionHandler

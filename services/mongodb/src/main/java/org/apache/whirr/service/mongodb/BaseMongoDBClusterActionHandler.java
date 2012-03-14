@@ -37,15 +37,19 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 
   private final String role;
   private final int defaultPort;
+  protected int port;
   private final String configKeyPort;
 
   private static final Logger LOG =
     LoggerFactory.getLogger(BaseMongoDBClusterActionHandler.class);
 
-  public BaseMongoDBClusterActionHandler(String role, int port, String configKeyPort) {
+  protected String tarUrl = null;
+
+  public BaseMongoDBClusterActionHandler(String role, int portNum, String configKeyPort) {
       this.role = role;
-      this.defaultPort = port;
+      this.defaultPort = portNum;
       this.configKeyPort = configKeyPort;
+	  this.port = this.defaultPort;
   }
 
   @Override 
@@ -69,6 +73,10 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
     Configuration config = getConfiguration(clusterSpec);
+	this.tarUrl = config.getString("whirr.mongodb.tarball.url");
+	if(this.tarUrl != null && this.tarUrl.length() == 0){
+		this.tarUrl = null;
+	}
   }
 
   @Override
@@ -79,10 +87,8 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
     Cluster cluster = event.getCluster();
     Configuration config = getConfiguration(clusterSpec);
 
-    int port = defaultPort;
-	
     if (configKeyPort != null) {
-      port = config.getInt(configKeyPort, defaultPort);
+      this.port = config.getInt(configKeyPort, defaultPort);
     }
 
     LOG.info("Opening firewall port for MongoDB on '" + port + "'");
@@ -99,12 +105,11 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
     addStatement(event, call("install_service"));
     addStatement(event, call("install_tarball"));
 
-	String tarUrl = config.getString("whirr.mongodb.tarball.url");
-	if(tarUrl != null && tarUrl.length() > 0 ){
+	if(this.tarUrl != null){
 		addStatement(event, call(
 			getInstallFunction(config), role,
 			MongoDBConstants.PARAM_PROVIDER, clusterSpec.getProvider(),
-			MongoDBConstants.PARAM_TARBALL, prepareRemoteFileUrl(event, tarUrl) )
+			MongoDBConstants.PARAM_TARBALL, prepareRemoteFileUrl(event, this.tarUrl) )
 		);
 	}else{
 		addStatement(event, call(
