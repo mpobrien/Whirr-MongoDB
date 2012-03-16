@@ -24,10 +24,22 @@ public final class MongoDBConstants {
   public static final String FUNCTION_CONFIGURE = "configure_mongodb";
   public static final String FUNCTION_START = "start_mongodb";
   public static final String FUNCTION_STOP = "stop_mongodb";
+  public static final String FUNCTION_SETUPAUTH = "auth_mongodb";
 
   public static final String PARAM_PROVIDER = "-c";
   public static final String PARAM_PORT = "-p";
   public static final String PARAM_TARBALL = "-t";
+  public static final String PARAM_NOJOURNAL = "-j";
+  public static final String PARAM_REPLSETNAME = "-r";
+  public static final String PARAM_PASSWORD = "-w";
+  public static final String PARAM_USER = "-u";
+  public static final String PARAM_BINDIP = "-b";
+
+  public static final String CFG_KEY_NOJOURNAL   = "mongodb.nojournal";
+  public static final String CFG_KEY_AUTH_PW     = "mongodb.auth.password";
+  public static final String CFG_KEY_AUTH_USER   = "mongodb.auth.username";
+  public static final String CFG_KEY_REPLSETNAME = "mongodb.replset.name";
+  public static final String CFG_KEY_BINDIP      = "mongodb.bindip";
 
   public static final String FILE_MONGODB_DEFAULT_PROPERTIES = "whirr-mongodb-default.properties";
 

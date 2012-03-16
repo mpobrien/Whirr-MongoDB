@@ -121,7 +121,7 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	  BasicDBObject returnVal = new BasicDBObject();
 
 	  //TODO make the replica set name configurable.
-	  returnVal.put("_id", "whirr");
+	  returnVal.put("_id",this.replicaSetName);
 	  int counter = 0;
 
 	  ArrayList replicaSetMembers = new ArrayList();

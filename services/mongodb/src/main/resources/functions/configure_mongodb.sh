@@ -22,6 +22,7 @@ function configure_mongodb() {
   ROLES=$1
   shift
 
+  echo "configuration args: $@"
   echo "my roles are: $ROLES"
 
   MONGO_HOME=/var
@@ -31,10 +32,15 @@ function configure_mongodb() {
 
   PORT=27017
   CLOUD_PROVIDER=
+  NOJOURNAL=
+  REPLICASET_NAME=whirr
+  AUTH_PW=
+  AUTH_USER=
+  BIND_IP=
 
   # get parameters
 
-  while getopts "p:c:" OPTION; do
+  while getopts "p:c:j:r:w:u:b:" OPTION; do
     case $OPTION in 
       p)
         PORT="$OPTARG"
@@ -42,6 +48,21 @@ function configure_mongodb() {
       c)
         CLOUD_PROVIDER="$OPTARG"
         ;;
+      j)
+        NOJOURNAL="$OPTARG"
+        ;;
+      r)
+        REPLICASET_NAME="$OPTARG"
+        ;;
+      w)
+        AUTH_PW="$OPTARG"
+        ;;
+      u)
+        AUTH_USER="$OPTARG"
+        ;;
+	  b)
+		BIND_IP="$OPTARG"
+		;;
     esac
   done
 
@@ -66,7 +87,33 @@ function configure_mongodb() {
     ;;
   esac
 
-  sudo sed -i -e "s|port.*|port = $PORT|" $MONGO_CONF_DIR/mongodb.conf
+echo "Creating a config file"
+cat > /etc/mongodb.conf <<EOF
+dbpath = $MONGO_DATA_DIR
+logpath = $MONGO_LOG_DIR/mongod.log
+logappend = true
+fork = true
+port = $PORT
+EOF
+
+if [ "$NOJOURNAL" = "true" ]; then
+    echo "nojournal=true" >> /etc/mongodb.conf
+elif [ "$NOJOURNAL" = "false" ]; then
+    echo "journal=true" >> /etc/mongodb.conf
+    echo "nojournal=false" >> /etc/mongodb.conf
+else
+    echo "#default journal options" >> /etc/mongodb.conf
+fi
+
+if [ "$AUTH_PW" -a "$AUTH_USER" ];
+then
+	echo "auth = true" >> /etc/mongodb.conf
+fi
+
+if [ "$BIND_IP" ];
+then
+	echo "bind_ip = $BIND_IP" >> /etc/mongodb.conf
+fi
 
   for role in $(echo "$ROLES" | tr "," "\n"); do
     case $role in
@@ -75,9 +122,15 @@ function configure_mongodb() {
       ;;
     mongodb-replsetmember)
       echo "Configuring mongodb replsetmember"
-      echo "replSet = whirr/localhost:$PORT" >> /etc/mongodb.conf
+      echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
+      ;;
+    mongodb-arbiter)
+      echo "Configuring mongodb arbiter"
+      echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
+      echo "arbiterOnly = true" >> /etc/mongodb.conf
       ;;
     esac
   done
+
 
 }

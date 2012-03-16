@@ -18,7 +18,19 @@
 
 package org.apache.whirr.service.mongodb;
 
+import org.apache.commons.codec.binary.Base64;
+import com.google.inject.Provider;
+import java.security.SecureRandom;
+import org.apache.commons.codec.binary.Base64;
 
 public class MongoDBCluster {
+
+    private static final SecureRandom rng = new SecureRandom();
+
+	private static String generateKeyFileContent(){
+		final byte[] random = new byte[2048];
+		rng.nextBytes(random);
+		return Base64.encodeBase64URLSafeString(random);
+	}
 
 }

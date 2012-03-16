@@ -127,16 +127,8 @@ function install_mongodb() {
                 ;;
       esac
       MONGO_BASE_DIR="/usr/local/$mongo_base_name"
+	  export PATH=$MONGO_BASE_DIR/bin:$PATH
       install_tarball "$TARBALL_URL" "/usr/local/"
-      echo "Creating a config file"
-      cat > /etc/mongodb.conf <<EOF
-dbpath = $MONGO_DATA_DIR
-logpath = $MONGO_LOG_DIR/mongod.log
-logappend = true
-fork = true
-port = 27017
-EOF
-
       echo "Creating init.d script"
 	  #TODO: this needs a whole lot more
       cat >/etc/init.d/mongodb <<EOF
