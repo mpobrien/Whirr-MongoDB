@@ -89,6 +89,9 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 		LOG.info("Connecting to " + setLeader.getPublicAddress().getHostAddress() + " to initiate replica set.");
 		mongo = new Mongo(setLeader.getPublicAddress().getHostAddress(), PORT); 
 		db = mongo.getDB("admin");
+		if(this.authPassword != null && this.authUsername != null){
+			db.authenticate(this.authUsername, this.authPassword.toCharArray());
+		}
 	}catch(Exception e){
 		LOG.error("Unable to get public host address of replica set leader, " + e.getMessage());
 		return;
@@ -96,6 +99,7 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 
 	try{
 		BasicDBObject configObject = this.generateReplicaSetConfig(replSetInstances); // throws IOexc
+		LOG.info("config object:"+ configObject.toString());
 		BasicDBObject commandInfo = new BasicDBObject("replSetInitiate", configObject);
 		LOG.info("Sending rs.initiate() command");
 		CommandResult initiateResult = db.command(commandInfo);
@@ -121,7 +125,11 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	  BasicDBObject returnVal = new BasicDBObject();
 
 	  //TODO make the replica set name configurable.
-	  returnVal.put("_id",this.replicaSetName);
+	  if(this.replicaSetName != null){
+		returnVal.put("_id",this.replicaSetName);
+	  }else{
+		returnVal.put("_id","whirr");
+	  }
 	  int counter = 0;
 
 	  ArrayList replicaSetMembers = new ArrayList();
