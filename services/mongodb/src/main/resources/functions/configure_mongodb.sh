@@ -127,7 +127,6 @@ fi
     mongodb-arbiter)
       echo "Configuring mongodb arbiter"
       echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
-      echo "arbiterOnly = true" >> /etc/mongodb.conf
       ;;
     esac
   done
