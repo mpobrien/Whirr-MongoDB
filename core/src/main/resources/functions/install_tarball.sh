@@ -32,21 +32,21 @@ function install_tarball() {
     do
       $curl -O $tar_url || true
 
-      #$curl -O $tar_url.md5 || true
+      $curl -O $tar_url.md5 || true
 
-      #if [ ! -e $tar_file_md5 ]; then
-        #echo "Could not download  $tar_url.md5. Continuing."
-        #break;
-      #elif md5sum -c $tar_file_md5; then
-        #break;
-      #else
-        ## workaround for cassandra broken .md5 files
-        #if [ `md5sum $tar_file | awk '{print $1}'` = `cat $tar_file_md5` ]; then
-          #break;
-        #fi
+      if [ ! -e $tar_file_md5 ]; then
+        echo "Could not download  $tar_url.md5. Continuing."
+        break;
+      elif md5sum -c $tar_file_md5; then
+        break;
+      else
+        # workaround for cassandra broken .md5 files
+        if [ `md5sum $tar_file | awk '{print $1}'` = `cat $tar_file_md5` ]; then
+          break;
+        fi
 
-        #rm -f $tar_file $tar_file_md5
-      #fi
+        rm -f $tar_file $tar_file_md5
+      fi
 
       if [ ! $retry_count -eq "3" ]; then
         sleep 10
