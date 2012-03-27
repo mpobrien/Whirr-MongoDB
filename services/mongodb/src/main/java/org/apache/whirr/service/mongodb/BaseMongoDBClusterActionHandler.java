@@ -166,12 +166,10 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 		configArgs.add(this.bindIp);
 	}
 
-    // TODO - Config of RS, etc for base classes
     addStatement(event, call( configFunction, configArgs.toArray(new String[]{})));
 
     LOG.info("Calling start function: "+ getStartFunction(config));
 
-    // TODO - Do we need to start mongo inside the config for RS etc?
     addStatement(event, call(getStartFunction(config)));
 
     if(this.authPassword != null && this.authUsername != null){

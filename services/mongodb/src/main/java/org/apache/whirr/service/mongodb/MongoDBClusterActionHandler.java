@@ -32,7 +32,6 @@ import java.io.IOException;
 public abstract class MongoDBClusterActionHandler
        extends ClusterActionHandlerSupport {
 
-  //TODO use serviceloader here?
   protected static final Set<String> ALL_ROLES = Sets.newHashSet(MongoDBStandaloneClusterActionHandler.ROLE, 
 		                                                         MongoDBReplSetMemberClusterActionHandler.ROLE);
 

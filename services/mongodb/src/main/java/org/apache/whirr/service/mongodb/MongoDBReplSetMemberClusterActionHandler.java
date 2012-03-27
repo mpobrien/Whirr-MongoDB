@@ -69,9 +69,6 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	//Just grab the first of these instances, use it to send the rs.initiate()
 	Cluster.Instance setLeader = replSetInstances.iterator().next();
 
-	//TODO this is obvs temporary, use the port from config file,
-	//need to refactor how its configured/exposed
-	
 	try{
 		Configuration config = getConfiguration(clusterSpec);
 		this.arbiterPort = config.getInt(MongoDBArbiterClusterActionHandler.CFG_KEY_PORT,
@@ -124,7 +121,6 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
   {
 	  BasicDBObject returnVal = new BasicDBObject();
 
-	  //TODO make the replica set name configurable.
 	  if(this.replicaSetName != null){
 		returnVal.put("_id",this.replicaSetName);
 	  }else{
