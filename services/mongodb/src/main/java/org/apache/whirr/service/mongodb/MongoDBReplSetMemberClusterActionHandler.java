@@ -98,7 +98,11 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	}
 
 	try{
-		BasicDBObject configObject = this.generateReplicaSetConfig(replSetInstances); // throws IOexc
+		// throws IOexc
+		BasicDBObject configObject = generateReplicaSetConfig(replSetInstances,
+				                                              this.replicaSetName,
+															  this.arbiterPort,
+															  this.port); 
 		LOG.info("config object:"+ configObject.toString());
 		BasicDBObject commandInfo = new BasicDBObject("replSetInitiate", configObject);
 		LOG.info("Sending rs.initiate() command");
@@ -112,6 +116,7 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
 	
   }
 
+
   /** 
    * Returns a BasicDBObject containing a replica set config object, usable as param to rs.initiate().
    * 
@@ -119,29 +124,31 @@ public class MongoDBReplSetMemberClusterActionHandler extends BaseMongoDBCluster
    * @throws IOException      Thrown if the private IP of any instance is unavailable
    *
    */
-  private BasicDBObject generateReplicaSetConfig(Set<Cluster.Instance> memberInstances)
-	  throws IOException 
-  {
+  public static BasicDBObject generateReplicaSetConfig(Set<Cluster.Instance> memberInstances,
+													   String replicaSetName,
+													   int arbiterPort,
+													   int memberPort)
+	  throws IOException {
 	  BasicDBObject returnVal = new BasicDBObject();
 
-	  //TODO make the replica set name configurable.
-	  if(this.replicaSetName != null){
-		returnVal.put("_id",this.replicaSetName);
+	  if(replicaSetName != null){
+		returnVal.put("_id",replicaSetName);
 	  }else{
-		returnVal.put("_id","whirr");
+		returnVal.put("_id", "whirr");
 	  }
 	  int counter = 0;
 
 	  ArrayList replicaSetMembers = new ArrayList();
 	  for(Cluster.Instance member : memberInstances){
 		  BasicDBObjectBuilder hostObj = BasicDBObjectBuilder.start().add("_id", counter);
-		  if(member.getRoles().contains(MongoDBArbiterClusterActionHandler.ROLE)){
+		  if(member.getRoles().contains(MongoDBArbiterClusterActionHandler.ROLE) ||
+			 member.getRoles().contains(MongoDBShardArbiterClusterActionHandler.ROLE) ){
 			  //it's an arbiter, use port from config file
-			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + this.arbiterPort);
+			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + arbiterPort);
 			  hostObj.add("arbiterOnly", true);
 		  }else{
 			  // it's a data member
-			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + this.port); // throws an IOExc
+			  hostObj.add("host", member.getPrivateAddress().getHostAddress() + ":" + memberPort); // throws an IOExc
 		  }
 
 		  replicaSetMembers.add(hostObj.get());
