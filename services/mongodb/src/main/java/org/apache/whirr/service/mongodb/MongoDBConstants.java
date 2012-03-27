@@ -40,6 +40,7 @@ public final class MongoDBConstants {
   public static final String CFG_KEY_AUTH_USER   = "mongodb.auth.username";
   public static final String CFG_KEY_REPLSETNAME = "mongodb.replset.name";
   public static final String CFG_KEY_BINDIP      = "mongodb.bindip";
+  public static final String CFG_KEY_SHARDREPLSETSIZE = "mongodb.shardreplsetsize";
 
   public static final String FILE_MONGODB_DEFAULT_PROPERTIES = "whirr-mongodb-default.properties";
 
