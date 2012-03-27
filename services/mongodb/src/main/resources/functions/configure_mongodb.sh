@@ -124,9 +124,23 @@ fi
       echo "Configuring mongodb replsetmember"
       echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
       ;;
+    mongodb-shard-replsetmember)
+      echo "Configuring mongodb shard replsetmember"
+      echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
+      echo "shardsvr = true" >> /etc/mongodb.conf 
+      ;;
     mongodb-arbiter)
       echo "Configuring mongodb arbiter"
       echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
+      ;;
+    mongodb-shard-arbiter)
+      echo "Configuring mongodb shard arbiter"
+      echo "replSet = $REPLICASET_NAME/localhost:$PORT" >> /etc/mongodb.conf
+      echo "shardsvr = true" >> /etc/mongodb.conf 
+      ;;
+    mongodb-shard-configserver)
+      echo "Configuring mongodb shard config server"
+      echo "configsvr = true" >> /etc/mongodb.conf 
       ;;
     esac
   done
