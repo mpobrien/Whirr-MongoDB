@@ -12,3 +12,5 @@
 org.apache.whirr.service.mongodb.MongoDBStandaloneClusterActionHandler
 org.apache.whirr.service.mongodb.MongoDBReplSetMemberClusterActionHandler
 org.apache.whirr.service.mongodb.MongoDBArbiterClusterActionHandler
+org.apache.whirr.service.mongodb.MongoDBShardArbiterClusterActionHandler
+org.apache.whirr.service.mongodb.MongoDBShardReplSetMemberClusterActionHandler
