@@ -110,6 +110,7 @@ function install_mongodb() {
       fi
       register_mongodb_repo
       install_mongodb_package
+	  export MONGO_SHELL=mongo
   else
 	  echo "Installing package from tarball url: $TARBALL_URL"
       #install the default package from repo
@@ -128,6 +129,7 @@ function install_mongodb() {
       esac
       MONGO_BASE_DIR="/usr/local/$mongo_base_name"
 	  export PATH=$MONGO_BASE_DIR/bin:$PATH
+	  export MONGO_SHELL=$MONGO_BASE_DIR/bin/mongo
       install_tarball "$TARBALL_URL" "/usr/local/"
       echo "Creating init.d script"
 	  #TODO: this needs a whole lot more

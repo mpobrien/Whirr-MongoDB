@@ -18,9 +18,11 @@
 function auth_mongodb() {
   if [[ "$1" != "" ]]; then
 	  #Create the user in the auth database (must be done from localhost if --auth is already set)
+	  PORT=$1
+	  shift
 	  USERNAME=$1
 	  shift
 	  PASSWORD=$1
-	  mongo admin --eval "db.addUser('$USERNAME', '$PASSWORD')"
+	  $MONGO_SHELL --port $PORT admin --eval "db.addUser('$USERNAME', '$PASSWORD')"
   fi
 }

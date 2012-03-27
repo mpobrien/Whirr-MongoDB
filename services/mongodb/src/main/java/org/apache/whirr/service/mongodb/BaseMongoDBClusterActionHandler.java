@@ -175,7 +175,10 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
     addStatement(event, call(getStartFunction(config)));
 
     if(this.authPassword != null && this.authUsername != null){
-		addStatement(event, call(MongoDBConstants.FUNCTION_SETUPAUTH, this.authUsername, this.authPassword));
+		addStatement(event, call(MongoDBConstants.FUNCTION_SETUPAUTH,
+			Integer.toString(this.port),
+			this.authUsername,
+			this.authPassword));
 	}
 
   }
