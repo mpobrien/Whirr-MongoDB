@@ -70,17 +70,6 @@ public class MongoDBShardReplSetMemberClusterActionHandler extends BaseMongoDBCl
 	Set<Cluster.Instance> replSetInstances = cluster.getInstancesMatching(anyRoleIn(replSetRoles));
 	//Just grab the first of these instances, use it to send the rs.initiate()
 
-    /*
-	try{
-		Configuration config = getConfiguration(clusterSpec);
-		this.arbiterPort = config.getInt(MongoDBArbiterClusterActionHandler.CFG_KEY_PORT,
-										  MongoDBArbiterClusterActionHandler.PORT);
-	}catch(IOException e){
-		this.arbiterPort = MongoDBArbiterClusterActionHandler.PORT;
-	}
-    */
-
-
     try{
         Configuration config = getConfiguration(clusterSpec);
         shardReplSetSize = config.getInt(MongoDBConstants.CFG_KEY_SHARDREPLSETSIZE);
@@ -94,17 +83,20 @@ public class MongoDBShardReplSetMemberClusterActionHandler extends BaseMongoDBCl
     //  - less than or equal to the # of instances allocated
     //  - # of instances allocated must be divisble by replset size per shard
     
-	int numShards = shardReplSetSize / replSetInstances.size();
+	LOG.info("shardreplsetsize " + shardReplSetSize);
+	LOG.info("replSetInstancessize " + replSetInstances.size());
+	int numShards = replSetInstances.size() / shardReplSetSize;
 
 	Mongo mongo;
 	DB db;
 
 	try{
 
-		//TODO use a java.util.concurrent.ExecutorService here?
+		//TODO use a java.util.concurrent.ExecutorService here maybe?
 		ArrayList<Thread> threadTracker = new ArrayList<Thread>();
 		Iterator<Cluster.Instance> instanceIterator = replSetInstances.iterator();
 		for(int i=0;i<numShards;i++){
+			LOG.info("setting up shard " + i);
 			Set<Cluster.Instance> shardReplSet = Sets.newHashSet();
 			//Partition all the replica set members allocated
 			//into sub-sets so we can assign them to different shards.
@@ -112,6 +104,8 @@ public class MongoDBShardReplSetMemberClusterActionHandler extends BaseMongoDBCl
 				Cluster.Instance setMember = instanceIterator.next();
 				shardReplSet.add(setMember);
 			}
+
+			LOG.info("shard " + i + " is " + shardReplSet);
 
 			BasicDBObject configObject = MongoDBReplSetMemberClusterActionHandler.generateReplicaSetConfig(shardReplSet,
 											this.replicaSetName,
@@ -138,7 +132,6 @@ public class MongoDBShardReplSetMemberClusterActionHandler extends BaseMongoDBCl
 		LOG.error("Unable to get public host address of replica set leader, " + e.getMessage());
 		return;
 	}
-
   }
 
 		  
