@@ -52,11 +52,23 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
   protected String tarUrl = null;
 
   //Configurable options to go into mongodb.conf file
-  protected Boolean noJournal      = null;
   protected String replicaSetName  = null;
   protected String authPassword    = null;
   protected String authUsername    = null;
   protected String bindIp          = null;
+
+  protected Boolean noJournal      = null;
+  protected Boolean noPreAlloc = null;                   
+  protected Boolean smallFiles = null;                   
+  protected Boolean noTableScan = null;                  
+  protected Integer nsSize = null;                       
+  protected Integer slowMs = null;                       
+  protected Boolean rest = null;                         
+  protected Boolean noHttpInterface = null;              
+  protected Integer journalCommitInterval = null;        
+  protected Integer oplogSize = null;        
+  protected Boolean noUnixSockets = null;                
+  protected Boolean objCheck = null;                     
 
   public BaseMongoDBClusterActionHandler(String role, int portNum, String configKeyPort) {
       this.role = role;
@@ -83,6 +95,18 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 	this.authPassword  = config.getString(MongoDBConstants.CFG_KEY_AUTH_PW, null);
 	this.authUsername  = config.getString(MongoDBConstants.CFG_KEY_AUTH_USER, null);
 	this.bindIp  = config.getString(MongoDBConstants.CFG_KEY_BINDIP, null);
+
+    this.noPreAlloc = config.getBoolean(MongoDBConstants.CFG_KEY_NOPREALLOC, null);
+    this.smallFiles = config.getBoolean(MongoDBConstants.CFG_KEY_SMALLFILES, null);
+    this.noTableScan = config.getBoolean(MongoDBConstants.CFG_KEY_NOTABLESCAN, null);
+    this.oplogSize = config.getInteger(MongoDBConstants.CFG_KEY_OPLOGSIZE, null);
+    this.nsSize = config.getInteger(MongoDBConstants.CFG_KEY_NSSIZE, null);
+    this.slowMs = config.getInteger(MongoDBConstants.CFG_KEY_SLOWMS, null);
+    this.rest = config.getBoolean(MongoDBConstants.CFG_KEY_REST, null);
+    this.noHttpInterface = config.getBoolean(MongoDBConstants.CFG_KEY_NOHTTP, null);
+    this.journalCommitInterval = config.getInteger(MongoDBConstants.CFG_KEY_JOURNALINTERVAL, null);
+    this.noUnixSockets = config.getBoolean(MongoDBConstants.CFG_KEY_NOUNIX, null);
+    this.objCheck = config.getBoolean(MongoDBConstants.CFG_KEY_OBJCHECK, null);
   }
 
   @Override
@@ -144,9 +168,9 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 	configArgs.add(clusterSpec.getProvider());
 	configArgs.add(MongoDBConstants.PARAM_PORT);
 	configArgs.add(String.valueOf(port));
+
 	if(this.noJournal != null){
 		configArgs.add(MongoDBConstants.PARAM_NOJOURNAL);
-		configArgs.add(this.noJournal.toString());
 	}
 
 	if(this.replicaSetName != null){
@@ -164,6 +188,54 @@ public class BaseMongoDBClusterActionHandler extends MongoDBClusterActionHandler
 	if(this.bindIp != null){
 		configArgs.add(MongoDBConstants.PARAM_BINDIP);
 		configArgs.add(this.bindIp);
+	}
+
+	if(this.noPreAlloc != null && this.noPreAlloc){
+		configArgs.add(MongoDBConstants.PARAM_NOPREALLOC);
+	}
+
+	if(this.smallFiles != null && this.smallFiles){
+		configArgs.add(MongoDBConstants.PARAM_SMALLFILES);
+	}
+
+	if(this.noTableScan != null && this.noTableScan){
+		configArgs.add(MongoDBConstants.PARAM_NOTABLESCAN);
+	}
+
+	if(this.rest != null && this.rest){
+		configArgs.add(MongoDBConstants.PARAM_REST);
+	}
+
+	if(this.noHttpInterface != null && this.noHttpInterface){
+		configArgs.add(MongoDBConstants.PARAM_NOHTTP);
+	}
+
+	if(this.noUnixSockets != null && this.noUnixSockets){
+		configArgs.add(MongoDBConstants.PARAM_NOUNIX);
+	}
+
+	if(this.objCheck != null && this.objCheck){
+		configArgs.add(MongoDBConstants.PARAM_OBJCHECK);
+	}
+
+	if(this.nsSize != null ){
+		configArgs.add(MongoDBConstants.PARAM_NSSIZE);
+		configArgs.add(this.nsSize.toString());
+	}
+
+	if(this.slowMs != null ){
+		configArgs.add(MongoDBConstants.PARAM_SLOWMS);
+		configArgs.add(this.slowMs.toString());
+	}
+
+	if(this.journalCommitInterval != null){
+		configArgs.add(MongoDBConstants.PARAM_JOURNALINTERVAL);
+		configArgs.add(this.journalCommitInterval.toString());
+	}
+
+	if(this.oplogSize != null){
+		configArgs.add(MongoDBConstants.PARAM_OPLOGSIZE);
+		configArgs.add(this.oplogSize.toString());
 	}
 
     addStatement(event, call( configFunction, configArgs.toArray(new String[]{})));

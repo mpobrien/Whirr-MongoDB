@@ -29,17 +29,41 @@ public final class MongoDBConstants {
   public static final String PARAM_PROVIDER = "-c";
   public static final String PARAM_PORT = "-p";
   public static final String PARAM_TARBALL = "-t";
-  public static final String PARAM_NOJOURNAL = "-j";
   public static final String PARAM_REPLSETNAME = "-r";
   public static final String PARAM_PASSWORD = "-w";
   public static final String PARAM_USER = "-u";
   public static final String PARAM_BINDIP = "-b";
+
+  public static final String PARAM_NOJOURNAL = "--nojournal";
+  public static final String PARAM_NOPREALLOC = "--noprealloc";
+  public static final String PARAM_SMALLFILES = "--smallfiles";
+  public static final String PARAM_NOTABLESCAN = "--notablescan";
+  public static final String PARAM_REST = "--rest";
+  public static final String PARAM_NOHTTP = "--nohttpinterface";
+  public static final String PARAM_NOUNIX = "--nounixsocket";
+  public static final String PARAM_OBJCHECK = "--objcheck";
+  public static final String PARAM_OPLOGSIZE = "--oplogSize";
+  public static final String PARAM_SLOWMS = "--slowMs";
+  public static final String PARAM_NSSIZE = "--nssize";
+  public static final String PARAM_JOURNALINTERVAL = "--journalCommitInterval";
 
   public static final String CFG_KEY_NOJOURNAL   = "mongodb.nojournal";
   public static final String CFG_KEY_AUTH_PW     = "mongodb.auth.password";
   public static final String CFG_KEY_AUTH_USER   = "mongodb.auth.username";
   public static final String CFG_KEY_REPLSETNAME = "mongodb.replset.name";
   public static final String CFG_KEY_BINDIP      = "mongodb.bindip";
+
+  public static final String CFG_KEY_NOPREALLOC      = "mongodb.noprealloc";
+  public static final String CFG_KEY_SMALLFILES      = "mongodb.smallfiles";
+  public static final String CFG_KEY_NOTABLESCAN     = "mongodb.notablescan";
+  public static final String CFG_KEY_NSSIZE          = "mongodb.nssize"; //
+  public static final String CFG_KEY_SLOWMS          = "mongodb.slowms"; //
+  public static final String CFG_KEY_REST            = "mongodb.rest";
+  public static final String CFG_KEY_NOHTTP          = "mongodb.nohttpinterface";
+  public static final String CFG_KEY_JOURNALINTERVAL = "mongodb.journalCommitInterval"; //
+  public static final String CFG_KEY_NOUNIX          = "mongodb.nounixsocket";
+  public static final String CFG_KEY_OBJCHECK        = "mongodb.objcheck";
+  public static final String CFG_KEY_OPLOGSIZE       = "mongodb.oplogSize";
 
   public static final String FILE_MONGODB_DEFAULT_PROPERTIES = "whirr-mongodb-default.properties";
 

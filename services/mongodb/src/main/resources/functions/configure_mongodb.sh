@@ -14,6 +14,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
+in_array() {
+    local hay needle=$1
+    shift
+    for hay; do
+        [[ $hay == $needle ]] && return 0
+    done
+    return 1
+}
+
 function configure_mongodb() {
   echo "configuring mongodb"
   local OPTIND
@@ -29,6 +39,7 @@ function configure_mongodb() {
   MONGO_CONF_DIR=/etc
   MONGO_LOG_DIR=/var/log/mongo
   MONGO_DATA_DIR=/var/lib/mongo
+  mkdir $MONGO_LOG_DIR
 
   PORT=27017
   CLOUD_PROVIDER=
@@ -39,32 +50,83 @@ function configure_mongodb() {
   BIND_IP=
 
   # get parameters
+echo "Creating a config file"
+cat > /etc/mongodb.conf <<EOF
+dbpath = $MONGO_DATA_DIR
+logpath = $MONGO_LOG_DIR/mongod.log
+logappend = true
+fork = true
+EOF
 
-  while getopts "p:c:j:r:w:u:b:" OPTION; do
-    case $OPTION in 
-      p)
-        PORT="$OPTARG"
-        ;;
-      c)
-        CLOUD_PROVIDER="$OPTARG"
-        ;;
-      j)
-        NOJOURNAL="$OPTARG"
-        ;;
-      r)
-        REPLICASET_NAME="$OPTARG"
-        ;;
-      w)
-        AUTH_PW="$OPTARG"
-        ;;
-      u)
-        AUTH_USER="$OPTARG"
-        ;;
-	  b)
-		BIND_IP="$OPTARG"
-		;;
-    esac
-  done
+while true
+do
+	case $# in 0) break ;; esac
+	case $1 in 
+		--nojournal)
+			echo "nojournal=true" >> /etc/mongodb.conf
+			shift ;;
+		--noprealloc)
+			echo "noprealloc=true" >> /etc/mongodb.conf
+			shift ;;
+		--smallfiles)
+			echo "smallfiles = true" >> /etc/mongodb.conf
+			shift ;;
+		--notablescan)
+			echo "notablescan = true" >> /etc/mongodb.conf
+			shift ;;
+		--rest)
+			echo "rest = true" >> /etc/mongodb.conf
+			shift ;;
+		--nohttpinterface)
+			echo "nohttpinterface = true" >> /etc/mongodb.conf
+			shift ;;
+		--nounixsocket)
+			echo "nounixsocket = true" >> /etc/mongodb.conf
+			shift ;;
+		--objcheck)
+			echo "objcheck = true" >> /etc/mongodb.conf
+			shift ;;
+        --oplogSize)
+            shift;
+            echo "oplogSize = $1" >> /etc/mongodb.conf
+            shift ;;
+        --journalCommitInterval)
+            shift;
+            echo "journalCommitInterval = $1" >> /etc/mongodb.conf
+            shift ;;
+        --nssize)
+            shift;
+            echo "nssize = $1" >> /etc/mongodb.conf
+            shift ;;
+        --slowMs)
+            shift;
+            echo "slowMs = $1" >> /etc/mongodb.conf
+            shift ;;
+		-p)
+			shift;
+			PORT=$1; shift ;;
+		-c)
+			shift;
+			CLOUD_PROVIDER="$1"; shift ;;
+		-r)
+			shift;
+			REPLICASET_NAME="$1"; shift ;;
+		-w)
+			shift;
+			AUTH_PW="$1"; shift ;;
+		-u)
+			shift;
+			AUTH_USER="$1"; shift ;;
+		-b)
+			shift;
+			BIND_IP="$1"; shift ;;
+		-*)
+			break ;;
+	esac
+done;
+
+
+
 
   # determine machine name
   case $CLOUD_PROVIDER in
@@ -87,23 +149,6 @@ function configure_mongodb() {
     ;;
   esac
 
-echo "Creating a config file"
-cat > /etc/mongodb.conf <<EOF
-dbpath = $MONGO_DATA_DIR
-logpath = $MONGO_LOG_DIR/mongod.log
-logappend = true
-fork = true
-port = $PORT
-EOF
-
-if [ "$NOJOURNAL" = "true" ]; then
-    echo "nojournal=true" >> /etc/mongodb.conf
-elif [ "$NOJOURNAL" = "false" ]; then
-    echo "journal=true" >> /etc/mongodb.conf
-    echo "nojournal=false" >> /etc/mongodb.conf
-else
-    echo "#default journal options" >> /etc/mongodb.conf
-fi
 
 if [ "$AUTH_PW" -a "$AUTH_USER" ];
 then
@@ -114,6 +159,7 @@ if [ "$BIND_IP" ];
 then
 	echo "bind_ip = $BIND_IP" >> /etc/mongodb.conf
 fi
+
 
   for role in $(echo "$ROLES" | tr "," "\n"); do
     case $role in
